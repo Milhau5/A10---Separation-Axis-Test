@@ -157,6 +157,7 @@ void BoundingBoxManagerSingleton::CalculateCollision(void)
 			else if(v1Max.z < v2Min.z || v1Min.z > v2Max.z)
 				bColliding = false;
 
+			//put another if statement inside this one with the new code
 			if(bColliding)
 				m_lColor[i] = m_lColor[j] = MERED; //We make the Boxes red
 		}
@@ -190,14 +191,14 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
 	
 	
 	float ra, rb;
-    glm::mat3 R, Abs, AbsR; //do we need Abs?
+    glm::mat3 R, AbsR; //do we need Abs?
 	//Matrix33 R, AbsR;
 
     // Compute rotation matrix expressing b in a's coordinate frame
 	//could be "i<3" or "i<axes.length"
     for (int i = 0; i < 3; i++)
-       for (int j = 0; j < 3; j++)
-           R[i][j] = glm::dot(a.u[i], b.u[j]); //?
+       for (int j = 0; j < 3; j++) //R[i][j] = dot(_____)
+           R[i][j] = glm::dot(&a.u[i], &b.u[j]); //?
 
     //a.u[0] = x-axis
 	//a.u[1] = y-axis
@@ -205,74 +206,76 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
 	// Compute translation vector t
     vector3 t = b.m_v3Centroid - a.m_v3Centroid;
     // Bring translation into a's coordinate frame
-    t = vector3(glm::dot(t, a.u[0]), glm::dot(t, a.u[2]), glm::dot(t, a.u[2]));
+	//does order of the operands matter?
+    t = vector3(glm::dot(a.u[0], t), glm::dot(t, a.u[2]), glm::dot(t, a.u[2]));
 
     // Compute common subexpressions. Add in an epsilon term to
     // counteract arithmetic errors when two edges are parallel and
     // their cross product is (near) null (see text for details)
     for (int i = 0; i < 3; i++)
        for (int j = 0; j < 3; j++)
-           AbsR[i][j] = AbsR[i][j] + glm::epsilon;
+           AbsR[i][j] = AbsR[i][j] + FLT_EPSILON;
 
     // Test axes L = A0, L = A1, L = A2
     for (int i = 0; i < 3; i++) {
         ra = e[i];
         rb = et[0] * AbsR[i][0] + et[1] * AbsR[i][1] + et[2] * AbsR[i][2];
-        if (Abs(t[i]) > ra + rb) return 0;
+        //abs = absolute value
+		if (abs(t[i]) > ra + rb) return 0;
     }
 
     // Test axes L = B0, L = B1, L = B2
     for (int i = 0; i < 3; i++) {
         ra = e[0] * AbsR[0][i] + e[1] * AbsR[1][i] + e[2] * AbsR[2][i];
         rb = et[i];
-        if (Abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) return 0;
+        if (abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) return 0;
     }
 
     // Test axis L = A0 x B0
     ra = e[1] * AbsR[2][0] + e[2] * AbsR[1][0];
     rb = e[1] * AbsR[0][2] + e[2] * AbsR[0][1];
-    if (Abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return 0;
+    if (abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return 0;
 
     // Test axis L = A0 x B1
     ra = e[1] * AbsR[2][1] + e[2] * AbsR[1][1];
     rb = et[0] * AbsR[0][2] + et[2] * AbsR[0][0];
-    if (Abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) return 0;
+    if (abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) return 0;
 
     // Test axis L = A0 x B2
     ra = e[1] * AbsR[2][2] + e[2] * AbsR[1][2];
     rb = et[0] * AbsR[0][1] + et[1] * AbsR[0][0];
-    if (Abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return 0;
+    if (abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return 0;
 
     // Test axis L = A1 x B0
     ra = e[0] * AbsR[2][0] + e[2] * AbsR[0][0];
     rb = et[1] * AbsR[1][2] + et[2] * AbsR[1][1];
 
-    if (Abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return 0;
+    if (abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return 0;
 
     // Test axis L = A1 x B1
     ra = e[0] * AbsR[2][1] + e[2] * AbsR[0][1];
     rb = et[0] * AbsR[1][2] + et[2] * AbsR[1][0];
-    if (Abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return 0;
+    if (abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return 0;
 
     // Test axis L = A1 x B2
     ra = e[0] * AbsR[2][2] + e[2] * AbsR[0][2];
     rb = et[0] * AbsR[1][1] + et[1] * AbsR[1][0];
-    if (Abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return 0;
+    if (abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return 0;
 
     // Test axis L = A2 x B0
     ra = e[0] * AbsR[1][0] + e[1] * AbsR[0][0];
     rb = et[1] * AbsR[2][2] + et[2] * AbsR[2][1];
-    if (Abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return 0;
+    if (abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return 0;
 
     // Test axis L = A2 x B1
     ra = e[0] * AbsR[1][1] + e[1] * AbsR[0][1];
     rb = et[0] * AbsR[2][2] + et[2] * AbsR[2][0];
-    if (Abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return 0;
+    if (abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return 0;
 
     // Test axis L = A2 x B2
     ra = e[0] * AbsR[1][2] + e[1] * AbsR[0][2];
     rb = et[0] * AbsR[2][1] + et[1] * AbsR[2][0];
-    if (Abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return 0;
+    if (abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return 0;
 
     // Since no separating axis is found, the OBBs must be intersecting
     return 1;
