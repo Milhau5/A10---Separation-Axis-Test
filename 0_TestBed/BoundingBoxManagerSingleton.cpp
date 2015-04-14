@@ -174,12 +174,19 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
 	vector3 e = a.m_v3Size/2.0f;
 	vector3 et = b.m_v3Size/2.0f;
 
-	vector3 u[3];
+	//use a pointer of whatever type you are storing
+	//
 
 	//Local axes
-	u[0] =  glm::translate(1.0f, 0.0f, 0.0f);
-	matrix4 uOne = a_mModelToWorld * glm::translate(0.0f, 1.0f, 0.0f);
-	matrix4 uTwo = a_mModelToWorld * glm::translate(0.0f, 0.0f, 1.0f);
+	a.u[0] =  a_mModelToWorld * glm::translate(1.0f, 0.0f, 0.0f);
+	a.u[1] =  a_mModelToWorld * glm::translate(0.0f, 1.0f, 0.0f);
+	a.u[2] =  a_mModelToWorld * glm::translate(0.0f, 0.0f, 1.0f);
+	//
+	b.u[0] =  a_mModelToWorld * glm::translate(1.0f, 0.0f, 0.0f);
+	b.u[1] =  a_mModelToWorld * glm::translate(0.0f, 1.0f, 0.0f);
+	b.u[2] =  a_mModelToWorld * glm::translate(0.0f, 0.0f, 1.0f);
+	
+	
 	
 	
 	float ra, rb;
@@ -187,6 +194,7 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
 	//Matrix33 R, AbsR;
 
     // Compute rotation matrix expressing b in a's coordinate frame
+	//could be "i<3" or "i<axes.length"
     for (int i = 0; i < 3; i++)
        for (int j = 0; j < 3; j++)
            R[i][j] = glm::dot(a.u[i], b.u[j]); //?
@@ -197,7 +205,7 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
 	// Compute translation vector t
     vector3 t = b.m_v3Centroid - a.m_v3Centroid;
     // Bring translation into a's coordinate frame
-    t = vector3(glm::dot(t, uZero), glm::dot(t, uTwo), glm::dot(t, uTwo));
+    t = vector3(glm::dot(t, a.u[0]), glm::dot(t, a.u[2]), glm::dot(t, a.u[2]));
 
     // Compute common subexpressions. Add in an epsilon term to
     // counteract arithmetic errors when two edges are parallel and
@@ -208,62 +216,62 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
 
     // Test axes L = A0, L = A1, L = A2
     for (int i = 0; i < 3; i++) {
-        ra = a.e[i];
-        rb = b.e[0] * AbsR[i][0] + b.e[1] * AbsR[i][1] + b.e[2] * AbsR[i][2];
+        ra = e[i];
+        rb = et[0] * AbsR[i][0] + et[1] * AbsR[i][1] + et[2] * AbsR[i][2];
         if (Abs(t[i]) > ra + rb) return 0;
     }
 
     // Test axes L = B0, L = B1, L = B2
     for (int i = 0; i < 3; i++) {
-        ra = a.e[0] * AbsR[0][i] + a.e[1] * AbsR[1][i] + a.e[2] * AbsR[2][i];
-        rb = b.e[i];
+        ra = e[0] * AbsR[0][i] + e[1] * AbsR[1][i] + e[2] * AbsR[2][i];
+        rb = et[i];
         if (Abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb) return 0;
     }
 
     // Test axis L = A0 x B0
-    ra = a.e[1] * AbsR[2][0] + a.e[2] * AbsR[1][0];
-    rb = b.e[1] * AbsR[0][2] + b.e[2] * AbsR[0][1];
+    ra = e[1] * AbsR[2][0] + e[2] * AbsR[1][0];
+    rb = e[1] * AbsR[0][2] + e[2] * AbsR[0][1];
     if (Abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) return 0;
 
     // Test axis L = A0 x B1
-    ra = a.e[1] * AbsR[2][1] + a.e[2] * AbsR[1][1];
-    rb = b.e[0] * AbsR[0][2] + b.e[2] * AbsR[0][0];
+    ra = e[1] * AbsR[2][1] + e[2] * AbsR[1][1];
+    rb = et[0] * AbsR[0][2] + et[2] * AbsR[0][0];
     if (Abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) return 0;
 
     // Test axis L = A0 x B2
-    ra = a.e[1] * AbsR[2][2] + a.e[2] * AbsR[1][2];
-    rb = b.e[0] * AbsR[0][1] + b.e[1] * AbsR[0][0];
+    ra = e[1] * AbsR[2][2] + e[2] * AbsR[1][2];
+    rb = et[0] * AbsR[0][1] + et[1] * AbsR[0][0];
     if (Abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) return 0;
 
     // Test axis L = A1 x B0
-    ra = a.e[0] * AbsR[2][0] + a.e[2] * AbsR[0][0];
-    rb = b.e[1] * AbsR[1][2] + b.e[2] * AbsR[1][1];
+    ra = e[0] * AbsR[2][0] + e[2] * AbsR[0][0];
+    rb = et[1] * AbsR[1][2] + et[2] * AbsR[1][1];
 
     if (Abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return 0;
 
     // Test axis L = A1 x B1
-    ra = a.e[0] * AbsR[2][1] + a.e[2] * AbsR[0][1];
-    rb = b.e[0] * AbsR[1][2] + b.e[2] * AbsR[1][0];
+    ra = e[0] * AbsR[2][1] + e[2] * AbsR[0][1];
+    rb = et[0] * AbsR[1][2] + et[2] * AbsR[1][0];
     if (Abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) return 0;
 
     // Test axis L = A1 x B2
-    ra = a.e[0] * AbsR[2][2] + a.e[2] * AbsR[0][2];
-    rb = b.e[0] * AbsR[1][1] + b.e[1] * AbsR[1][0];
+    ra = e[0] * AbsR[2][2] + e[2] * AbsR[0][2];
+    rb = et[0] * AbsR[1][1] + et[1] * AbsR[1][0];
     if (Abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) return 0;
 
     // Test axis L = A2 x B0
-    ra = a.e[0] * AbsR[1][0] + a.e[1] * AbsR[0][0];
-    rb = b.e[1] * AbsR[2][2] + b.e[2] * AbsR[2][1];
+    ra = e[0] * AbsR[1][0] + e[1] * AbsR[0][0];
+    rb = et[1] * AbsR[2][2] + et[2] * AbsR[2][1];
     if (Abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) return 0;
 
     // Test axis L = A2 x B1
-    ra = a.e[0] * AbsR[1][1] + a.e[1] * AbsR[0][1];
-    rb = b.e[0] * AbsR[2][2] + b.e[2] * AbsR[2][0];
+    ra = e[0] * AbsR[1][1] + e[1] * AbsR[0][1];
+    rb = et[0] * AbsR[2][2] + et[2] * AbsR[2][0];
     if (Abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) return 0;
 
     // Test axis L = A2 x B2
-    ra = a.e[0] * AbsR[1][2] + a.e[1] * AbsR[0][2];
-    rb = b.e[0] * AbsR[2][1] + b.e[1] * AbsR[2][0];
+    ra = e[0] * AbsR[1][2] + e[1] * AbsR[0][2];
+    rb = et[0] * AbsR[2][1] + et[1] * AbsR[2][0];
     if (Abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) return 0;
 
     // Since no separating axis is found, the OBBs must be intersecting
