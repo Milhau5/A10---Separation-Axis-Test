@@ -158,9 +158,11 @@ void BoundingBoxManagerSingleton::CalculateCollision(void)
 				bColliding = false;
 
 			//put another if statement inside this one with the new code
-			if(bColliding)
-				//CALL NEW METHOD HERE
-				m_lColor[i] = m_lColor[j] = MERED; //We make the Boxes red
+			if(bColliding){
+				if(TestOBBOBB(i, j) == 1){
+					m_lColor[i] = m_lColor[j] = MERED; //We make the Boxes red
+				}
+			}
 		}
 	}
 }
@@ -172,48 +174,45 @@ void BoundingBoxManagerSingleton::CalculateCollision(void)
 //two indices are the only parameters we need, that way we get matrix easy
 //define in .h file
 //m_lBox is name of index
-int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld) //takes in two boxes
+int BoundingBoxManagerSingleton::TestOBBOBB(int indexA, int indexB) //takes in two boxes
 {
     //we already have centroid
+	BoundingBoxClass *a = m_lBox[indexA];
+	BoundingBoxClass *b = m_lBox[indexB];
 	
 	//halfWidth vector
-	vector3 e = a.m_v3Size/2.0f;
-	vector3 et = b.m_v3Size/2.0f;
+	vector3 e = a->m_v3Size/2.0f;
+	vector3 et = b->m_v3Size/2.0f;
 
 	//use a pointer of whatever type you are storing
 	//
 
 	//Local axes
-	a.u[0] = vector3(a_mModelToWorld * vector4(1.0,0.0,0.0,0.0)); //THIS IS THE RIGHT ONE!
-	//a.u[0] =  a_mModelToWorld * glm::translate(1.0f, 0.0f, 0.0f);
-	a.u[1] =  a_mModelToWorld * glm::translate(0.0f, 1.0f, 0.0f);
-	a.u[2] =  a_mModelToWorld * glm::translate(0.0f, 0.0f, 1.0f);
-	//
-	b.u[0] =  a_mModelToWorld * glm::translate(1.0f, 0.0f, 0.0f);
-	b.u[1] =  a_mModelToWorld * glm::translate(0.0f, 1.0f, 0.0f);
-	b.u[2] =  a_mModelToWorld * glm::translate(0.0f, 0.0f, 1.0f);
-	
-	
-	
+	a->u[0] = vector3(m_lMatrix[indexA] * vector4(1.0,0.0,0.0,0.0)); //THIS IS THE RIGHT ONE!
+	a->u[1] = vector3(m_lMatrix[indexA] * vector4(0.0,1.0,0.0,0.0));
+	a->u[2] = vector3(m_lMatrix[indexA] * vector4(0.0,0.0,1.0,0.0));
+
+	b->u[0] = vector3(m_lMatrix[indexB] * vector4(1.0,0.0,0.0,0.0));
+	b->u[1] = vector3(m_lMatrix[indexB] * vector4(0.0,1.0,0.0,0.0));
+	b->u[2] = vector3(m_lMatrix[indexB] * vector4(0.0,0.0,1.0,0.0));
 	
 	float ra, rb;
-    glm::mat3 R, AbsR; //do we need Abs?
-	//Matrix33 R, AbsR;
+    glm::mat3 R, AbsR; 
 
     // Compute rotation matrix expressing b in a's coordinate frame
 	//could be "i<3" or "i<axes.length"
     for (int i = 0; i < 3; i++)
        for (int j = 0; j < 3; j++) //R[i][j] = dot(_____)
-           R[i][j] = glm::dot(&a.u[i], &b.u[j]); //?
+           R[i][j] = glm::dot(a->u[i], b->u[j]); //?
 
     //a.u[0] = x-axis
 	//a.u[1] = y-axis
 	//a.u[2] = z-axis
 	// Compute translation vector t
-    vector3 t = b.m_v3Centroid - a.m_v3Centroid;
+    vector3 t = b->m_v3Centroid - a->m_v3Centroid;
     // Bring translation into a's coordinate frame
 	//does order of the operands matter?
-    t = vector3(glm::dot(a.u[0], t), glm::dot(t, a.u[2]), glm::dot(t, a.u[2]));
+    t = vector3(glm::dot(a->u[0], t), glm::dot(t, a->u[2]), glm::dot(t, a->u[2]));
 
     // Compute common subexpressions. Add in an epsilon term to
     // counteract arithmetic errors when two edges are parallel and
@@ -255,7 +254,6 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
     // Test axis L = A1 x B0
     ra = e[0] * AbsR[2][0] + e[2] * AbsR[0][0];
     rb = et[1] * AbsR[1][2] + et[2] * AbsR[1][1];
-
     if (abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) return 0;
 
     // Test axis L = A1 x B1

@@ -55,7 +55,7 @@ public:
 	*/
 	void CalculateCollision(void);
 
-	int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b);
+	int TestOBBOBB(int indexA, int indexB);
 
 private:
 	/* Constructor */
