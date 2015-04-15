@@ -150,6 +150,7 @@ void BoundingBoxManagerSingleton::CalculateCollision(void)
 			vector3 v2Max = m_lBox[j]->GetMaximumAABB();
 
 			bool bColliding = true;
+			//bool bCollidingTwo
 			if(v1Max.x < v2Min.x || v1Min.x > v2Max.x)
 				bColliding = false;
 			else if(v1Max.y < v2Min.y || v1Min.y > v2Max.y)
@@ -158,14 +159,28 @@ void BoundingBoxManagerSingleton::CalculateCollision(void)
 				bColliding = false;
 
 			//put another if statement inside this one with the new code
+			//if(bColliding){
+				//TestOBBOBB(i,j);
+				if(TestOBBOBB(i,j) == 1){ //another &&, "is this the inside box?"
+					m_lColor[i] = m_lColor[j] = MERED; //We make the Boxes red
+				}
+			//}
+		}
+	}
+}
+
+
+
+/*//put another if statement inside this one with the new code
 			if(bColliding){
+
 				if(TestOBBOBB(i, j) == 1){
 					m_lColor[i] = m_lColor[j] = MERED; //We make the Boxes red
 				}
 			}
 		}
 	}
-}
+}*/
 
 //Point c = centroid
 //Vector u[3] = local x-, y-, and z-axis
@@ -197,7 +212,7 @@ int BoundingBoxManagerSingleton::TestOBBOBB(int indexA, int indexB) //takes in t
 	b->u[2] = vector3(m_lMatrix[indexB] * vector4(0.0,0.0,1.0,0.0));
 	
 	float ra, rb;
-    glm::mat3 R, AbsR; 
+    glm::mat3x3 R, AbsR; 
 
     // Compute rotation matrix expressing b in a's coordinate frame
 	//could be "i<3" or "i<axes.length"
@@ -212,14 +227,14 @@ int BoundingBoxManagerSingleton::TestOBBOBB(int indexA, int indexB) //takes in t
     vector3 t = b->m_v3Centroid - a->m_v3Centroid;
     // Bring translation into a's coordinate frame
 	//does order of the operands matter?
-    t = vector3(glm::dot(a->u[0], t), glm::dot(t, a->u[2]), glm::dot(t, a->u[2]));
+    t = vector3(glm::dot(a->u[0], t), glm::dot(t, a->u[1]), glm::dot(t, a->u[2]));
 
     // Compute common subexpressions. Add in an epsilon term to
     // counteract arithmetic errors when two edges are parallel and
     // their cross product is (near) null (see text for details)
     for (int i = 0; i < 3; i++)
        for (int j = 0; j < 3; j++)
-           AbsR[i][j] = AbsR[i][j] + FLT_EPSILON;
+		   AbsR[i][j] = abs(R[i][j]) + FLT_EPSILON;
 
     // Test axes L = A0, L = A1, L = A2
     for (int i = 0; i < 3; i++) {
