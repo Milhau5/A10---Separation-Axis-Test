@@ -159,6 +159,7 @@ void BoundingBoxManagerSingleton::CalculateCollision(void)
 
 			//put another if statement inside this one with the new code
 			if(bColliding)
+				//CALL NEW METHOD HERE
 				m_lColor[i] = m_lColor[j] = MERED; //We make the Boxes red
 		}
 	}
@@ -167,6 +168,10 @@ void BoundingBoxManagerSingleton::CalculateCollision(void)
 //Point c = centroid
 //Vector u[3] = local x-, y-, and z-axis
 //Vector e = Positive halfwidth extents of OBB along each axis
+
+//two indices are the only parameters we need, that way we get matrix easy
+//define in .h file
+//m_lBox is name of index
 int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld) //takes in two boxes
 {
     //we already have centroid
@@ -179,7 +184,8 @@ int TestOBBOBB(BoundingBoxClass &a, BoundingBoxClass &b, matrix4 a_mModelToWorld
 	//
 
 	//Local axes
-	a.u[0] =  a_mModelToWorld * glm::translate(1.0f, 0.0f, 0.0f);
+	a.u[0] = vector3(a_mModelToWorld * vector4(1.0,0.0,0.0,0.0)); //THIS IS THE RIGHT ONE!
+	//a.u[0] =  a_mModelToWorld * glm::translate(1.0f, 0.0f, 0.0f);
 	a.u[1] =  a_mModelToWorld * glm::translate(0.0f, 1.0f, 0.0f);
 	a.u[2] =  a_mModelToWorld * glm::translate(0.0f, 0.0f, 1.0f);
 	//
