@@ -23,7 +23,7 @@ class BoundingBoxClass
 public:
 	vector3 m_v3Centroid;//Center point of the model, the origin in GSpace in which the sphere is going to be located
 	vector3 m_v3Size;//Size of the Box
-	vector3 u[3]; //will hold the three local axes
+	vector4 u[3]; //will hold the three local axes, used to be vec3
 	
 	/* Constructor */
 	BoundingBoxClass(void);

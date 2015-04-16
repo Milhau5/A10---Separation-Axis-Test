@@ -203,13 +203,21 @@ int BoundingBoxManagerSingleton::TestOBBOBB(int indexA, int indexB) //takes in t
 	//
 
 	//Local axes
-	a->u[0] = vector3(m_lMatrix[indexA] * vector4(1.0,0.0,0.0,0.0)); //THIS IS THE RIGHT ONE!
+	/*a->u[0] = vector3(m_lMatrix[indexA] * vector4(1.0,0.0,0.0,0.0)); //THIS IS THE RIGHT ONE!
 	a->u[1] = vector3(m_lMatrix[indexA] * vector4(0.0,1.0,0.0,0.0));
 	a->u[2] = vector3(m_lMatrix[indexA] * vector4(0.0,0.0,1.0,0.0));
 
 	b->u[0] = vector3(m_lMatrix[indexB] * vector4(1.0,0.0,0.0,0.0));
 	b->u[1] = vector3(m_lMatrix[indexB] * vector4(0.0,1.0,0.0,0.0));
-	b->u[2] = vector3(m_lMatrix[indexB] * vector4(0.0,0.0,1.0,0.0));
+	b->u[2] = vector3(m_lMatrix[indexB] * vector4(0.0,0.0,1.0,0.0));*/
+
+	a->u[0] = vector4(m_lMatrix[indexA] * vector4(1.0,0.0,0.0,0.0)); //THIS IS THE RIGHT ONE!
+	a->u[1] = vector4(m_lMatrix[indexA] * vector4(0.0,1.0,0.0,0.0));
+	a->u[2] = vector4(m_lMatrix[indexA] * vector4(0.0,0.0,1.0,0.0));
+
+	b->u[0] = vector4(m_lMatrix[indexB] * vector4(1.0,0.0,0.0,0.0));
+	b->u[1] = vector4(m_lMatrix[indexB] * vector4(0.0,1.0,0.0,0.0));
+	b->u[2] = vector4(m_lMatrix[indexB] * vector4(0.0,0.0,1.0,0.0));
 	
 	float ra, rb;
     glm::mat3x3 R, AbsR; 
@@ -224,10 +232,10 @@ int BoundingBoxManagerSingleton::TestOBBOBB(int indexA, int indexB) //takes in t
 	//a.u[1] = y-axis
 	//a.u[2] = z-axis
 	// Compute translation vector t
-    vector3 t = b->m_v3Centroid - a->m_v3Centroid;
+	vector4 t = m_lMatrix[indexB] * vector4(b->m_v3Centroid, 1.0f) - m_lMatrix[indexA] * vector4(a->m_v3Centroid, 1.0f);
     // Bring translation into a's coordinate frame
 	//does order of the operands matter?
-    t = vector3(glm::dot(a->u[0], t), glm::dot(t, a->u[1]), glm::dot(t, a->u[2]));
+    t = vector4(glm::dot(a->u[0], t), glm::dot(t, a->u[1]), glm::dot(t, a->u[2]), 1.0f);
 
     // Compute common subexpressions. Add in an epsilon term to
     // counteract arithmetic errors when two edges are parallel and
